@@ -1,0 +1,2 @@
+1. Make sure ffmpeg dependency is available in the ffmpeg path
+2. Target device to be specified 

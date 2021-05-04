@@ -1,0 +1,31 @@
+project(host)
+add_compile_options(-std=c++11 -fPIE -fstack-protector-all)
+
+if(${BUILD_TARGET} MATCHES "A200")
+    add_definitions(-DATLAS_DEVICE)
+else()
+    add_definitions(-DATLAS_HOST)
+endif()
+
+if(NOT DEFINED ENV{FFMPEG_PATH})
+    message(FATAL_ERROR "please define environment variable:FFMPEG_PATH")  
+else()
+    # message("FFMPEG_PATH $ENV{FFMPEG_PATH}")
+    set(FFMPEG_PATH $ENV{FFMPEG_PATH})
+endif()
+find_package(FFMPEG REQUIRED)
+
+include_directories(${PROJECT_SRC_ROOT}/../Common/FileManager)
+include_directories(${PROJECT_SRC_ROOT}/../Common/)
+include_directories(${FFMPEG_INCLUDE_DIRS})
+aux_source_directory(${PROJECT_SRC_ROOT}/../Common/FileManager FileManager_SRC)
+aux_source_directory(${PROJECT_SRC_ROOT}/StreamPuller StreamPuller_SRC)
+aux_source_directory(${PROJECT_SRC_ROOT}/DstEngine DstEngine_SRC)
+
+if(${BUILD_TARGET} MATCHES "A200")
+    file(GLOB DDK_HOST_LIBRARIES $ENV{DDK_HOME}/${_DDK_HOST_PATH_SUFFIXES}/*.so)
+endif()
+
+aux_source_directory(${PROJECT_SRC_ROOT} main_src)
+add_executable(main ${main_src} ${FileManager_SRC} ${DstEngine_SRC} ${StreamPuller_SRC})
+target_link_libraries(main ${DDK_HOST_LIBRARIES} ${FFMPEG_LIBRARIES} -Wl,-z,relro,-z,now,-z,noexecstack -pie -pthread)
